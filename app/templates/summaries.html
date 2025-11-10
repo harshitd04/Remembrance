@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Remembrance - Summaries{% endblock %}
+
+{% block content %}
+<h1>Your Summaries</h1>
+
+<div class="card">
+    <h2>Weekly Summaries</h2>
+    <p style="color: var(--color-text-muted);">
+        AI-generated summaries of your weekly journal entries
+    </p>
+    
+    <div class="form-group">
+        <label for="week-select">Select Week</label>
+        <select id="week-select" class="form-control">
+            <option value="">Choose a week...</option>
+        </select>
+    </div>
+    
+    <button onclick="loadWeeklySummary()" class="btn btn-primary">
+        Load Weekly Summary
+    </button>
+    
+    <div id="weekly-summary-content" style="margin-top: 1rem;"></div>
+</div>
+
+<div class="card">
+    <h2>Monthly Summaries</h2>
+    <p style="color: var(--color-text-muted);">
+        Comprehensive monthly overviews combining weekly summaries
+    </p>
+    
+    <div class="form-group">
+        <label for="month-select">Select Month</label>
+        <select id="month-select" class="form-control">
+            <option value="">Choose a month...</option>
+            {% for month in range(1, 13) %}
+            <option value="{{ month }}">{{ ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][month-1] }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <button onclick="loadMonthlySummary()" class="btn btn-primary">
+        Load Monthly Summary
+    </button>
+    
+    <div id="monthly-summary-content" style="margin-top: 1rem;"></div>
+</div>
+
+<div class="card">
+    <h2>Yearly Summary</h2>
+    <p style="color: var(--color-text-muted);">
+        Annual review of your entire year's journey
+    </p>
+    
+    <div class="form-group">
+        <label for="year-select">Select Year</label>
+        <select id="year-select" class="form-control">
+            <option value="">Choose a year...</option>
+            {% for year in range(2024, 2026) %}
+            <option value="{{ year }}" {% if year == 2025 %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <button onclick="loadYearlySummary()" class="btn btn-primary">
+        Load Yearly Summary
+    </button>
+    
+    <div id="yearly-summary-content" style="margin-top: 1rem;"></div>
+</div>
+
+<script>
+// Populate week dropdown with dates
+function populateWeekDropdown() {
+    const weekSelect = document.getElementById('week-select');
+    const currentYear = new Date().getFullYear();
+    
+    // Calculate weeks for current year
+    for (let week = 1; week <= 52; week++) {
+        const dates = getWeekDates(week, currentYear);
+        const option = document.createElement('option');
+        option.value = week;
+        option.textContent = `Week ${week} (${dates.start} - ${dates.end})`;
+        weekSelect.appendChild(option);
+    }
+}
+
+// Calculate start and end dates for a given week
+function getWeekDates(weekNum, year) {
+    const jan1 = new Date(year, 0, 1);
+    const daysOffset = (weekNum - 1) * 7;
+    
+    // Find Monday of the week
+    const weekStart = new Date(jan1);
+    weekStart.setDate(jan1.getDate() + daysOffset - jan1.getDay() + 1);
+    
+    // Calculate Sunday (end of week)
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    
+    const formatDate = (date) => {
+        const month = date.toLocaleString('en-US', { month: 'short' });
+        const day = date.getDate();
+        return `${month} ${day}`;
+    };
+    
+    return {
+        start: formatDate(weekStart),
+        end: formatDate(weekEnd)
+    };
+}
+
+// Initialize dropdown on page load
+document.addEventListener('DOMContentLoaded', populateWeekDropdown);
+
+function loadWeeklySummary(regenerate = false) {
+    const week = document.getElementById('week-select').value;
+    const year = new Date().getFullYear();
+    
+    if (!week) {
+        showNotification('Please select a week', 'error');
+        return;
+    }
+    
+    const url = `/summary/weekly/${week}/${year}${regenerate ? '?regenerate=true' : ''}`;
+    
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            const content = document.getElementById('weekly-summary-content');
+            const formattedSummary = formatMarkdown(data.summary);
+            const cacheStatus = data.cached ? '💾 Loaded from cache' : '✨ Freshly generated';
+            content.innerHTML = `
+                <div class="card" style="background: rgba(168, 85, 247, 0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0;">${data.title || 'Week ' + data.week_number}</h3>
+                        <button onclick="loadWeeklySummary(true)" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                            🔄 Regenerate
+                        </button>
+                    </div>
+                    <div style="line-height: 1.8;">${formattedSummary}</div>
+                    <p style="color: var(--color-text-muted); font-size: 12px; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                        📊 ${data.entries_count} entries | 🕐 Generated: ${new Date(data.generated_at).toLocaleString()} | ${cacheStatus}
+                    </p>
+                </div>
+            `;
+        })
+        .catch(() => showNotification('Failed to load summary', 'error'));
+}
+
+function loadMonthlySummary(regenerate = false) {
+    const month = document.getElementById('month-select').value;
+    const year = new Date().getFullYear();
+    
+    if (!month) {
+        showNotification('Please select a month', 'error');
+        return;
+    }
+    
+    const url = `/summary/monthly/${month}/${year}${regenerate ? '?regenerate=true' : ''}`;
+    
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            const content = document.getElementById('monthly-summary-content');
+            const formattedSummary = formatMarkdown(data.summary);
+            const cacheStatus = data.cached ? '💾 Loaded from cache' : '✨ Freshly generated';
+            content.innerHTML = `
+                <div class="card" style="background: rgba(168, 85, 247, 0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0;">${data.title || 'Month ' + data.month + ' - ' + data.year}</h3>
+                        <button onclick="loadMonthlySummary(true)" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                            🔄 Regenerate
+                        </button>
+                    </div>
+                    <div style="line-height: 1.8;">${formattedSummary}</div>
+                    <p style="color: var(--color-text-muted); font-size: 12px; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                        📊 ${data.entries_count} entries | 🕐 Generated: ${new Date(data.generated_at).toLocaleString()} | ${cacheStatus}
+                    </p>
+                </div>
+            `;
+        })
+        .catch(() => showNotification('Failed to load summary', 'error'));
+}
+
+function loadYearlySummary(regenerate = false) {
+    const year = document.getElementById('year-select').value;
+    
+    if (!year) {
+        showNotification('Please select a year', 'error');
+        return;
+    }
+    
+    const url = `/summary/yearly/${year}${regenerate ? '?regenerate=true' : ''}`;
+    
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            const content = document.getElementById('yearly-summary-content');
+            const formattedSummary = formatMarkdown(data.summary);
+            const cacheStatus = data.cached ? '💾 Loaded from cache' : '✨ Freshly generated';
+            content.innerHTML = `
+                <div class="card" style="background: rgba(168, 85, 247, 0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0;">${data.title || 'Year ' + data.year}</h3>
+                        <button onclick="loadYearlySummary(true)" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                            🔄 Regenerate
+                        </button>
+                    </div>
+                    <div style="line-height: 1.8;">${formattedSummary}</div>
+                    <p style="color: var(--color-text-muted); font-size: 12px; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                        📊 ${data.entries_count} entries | 🕐 Generated: ${new Date(data.generated_at).toLocaleString()} | ${cacheStatus}
+                    </p>
+                </div>
+            `;
+        })
+        .catch(() => showNotification('Failed to load summary', 'error'));
+}
+
+// Simple markdown formatter for summary display
+function formatMarkdown(text) {
+    if (!text) return '';
+    
+    // Convert markdown to HTML
+    return text
+        // Headers
+        .replace(/^### (.*$)/gim, '<h4 style="color: var(--color-violet); margin-top: 1.5rem; margin-bottom: 0.5rem;">$1</h4>')
+        .replace(/^## (.*$)/gim, '<h3 style="color: var(--color-violet); margin-top: 1.5rem; margin-bottom: 0.5rem;">$1</h3>')
+        .replace(/^# (.*$)/gim, '<h2 style="color: var(--color-violet); margin-top: 1.5rem; margin-bottom: 0.5rem;">$1</h2>')
+        // Bold
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Italic
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // Line breaks
+        .replace(/\n\n/g, '</p><p style="margin: 0.5rem 0;">')
+        .replace(/\n/g, '<br>')
+        // Wrap in paragraph
+        .replace(/^(.+)$/gim, '<p style="margin: 0.5rem 0;">$1</p>')
+        // Bullet points
+        .replace(/^- (.*$)/gim, '<li style="margin-left: 1.5rem;">$1</li>')
+        .replace(/(<li.*<\/li>)/s, '<ul style="margin: 0.5rem 0;">$1</ul>');
+}
+</script>
+{% endblock %}

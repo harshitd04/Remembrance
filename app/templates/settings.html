@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Remembrance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+
+    .settings-header {
+        margin-bottom: 2rem;
+    }
+
+    .settings-header h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .current-user-badge {
+        display: inline-block;
+        background: rgba(139, 92, 246, 0.2);
+        color: #8b5cf6;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+
+    .settings-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .settings-section h2 {
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+        color: #8b5cf6;
+    }
+
+    .user-list {
+        list-style: none;
+        padding: 0;
+        margin: 1rem 0;
+    }
+
+    .user-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        transition: background 0.2s;
+    }
+
+    .user-item:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .user-item.active {
+        background: rgba(139, 92, 246, 0.15);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .user-name {
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+
+    .user-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .btn-primary {
+        background: #8b5cf6;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #7c3aed;
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-danger {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+
+    .btn-danger:hover {
+        background: rgba(239, 68, 68, 0.3);
+    }
+
+    .add-user-form {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .add-user-form input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        font-size: 1rem;
+    }
+
+    .add-user-form input:focus {
+        outline: none;
+        border-color: #8b5cf6;
+    }
+
+    .notification {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: none;
+    }
+
+    .notification.success {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .notification.error {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .notification.show {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <div class="settings-header">
+        <h1>⚙️ Settings</h1>
+        <div class="current-user-badge">
+            Current User: <strong id="current-user-display">{{ current_user }}</strong>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <div class="settings-section">
+        <h2>User Management</h2>
+        <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: 1rem;">
+            Manage multiple journal users. Each user has their own separate journal entries, embeddings, and summaries.
+        </p>
+
+        <div class="add-user-form">
+            <input 
+                type="text" 
+                id="new-username" 
+                placeholder="Enter new user name"
+                maxlength="50"
+            />
+            <button class="btn btn-primary" onclick="addUser()">Add User</button>
+        </div>
+
+        <ul class="user-list" id="user-list">
+            {% for user in users %}
+            <li class="user-item {% if user == current_user %}active{% endif %}" data-username="{{ user }}">
+                <span class="user-name">
+                    {{ user|title }}
+                    {% if user == current_user %}
+                    <span style="color: #8b5cf6; font-size: 0.9rem;">● Active</span>
+                    {% endif %}
+                </span>
+                <div class="user-actions">
+                    {% if user != current_user %}
+                    <button class="btn btn-secondary" onclick="switchUser('{{ user }}')">
+                        Switch
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteUser('{{ user }}')">
+                        Delete
+                    </button>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showNotification(message, type = 'success') {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.className = `notification ${type} show`;
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 5000);
+    }
+
+    async function addUser() {
+        const input = document.getElementById('new-username');
+        const username = input.value.trim().toLowerCase();
+        
+        if (!username) {
+            showNotification('Please enter a username', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/settings/api/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showNotification(data.message, 'success');
+                input.value = '';
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(data.message, 'error');
+            }
+        } catch (error) {
+            showNotification('Failed to add user', 'error');
+            console.error(error);
+        }
+    }
+
+    async function switchUser(username) {
+        try {
+            const response = await fetch('/settings/api/users/switch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showNotification(data.message, 'success');
+                setTimeout(() => location.reload(), 500);
+            } else {
+                showNotification(data.message, 'error');
+            }
+        } catch (error) {
+            showNotification('Failed to switch user', 'error');
+            console.error(error);
+        }
+    }
+
+    async function deleteUser(username) {
+        if (!confirm(`Are you sure you want to delete user "${username}"? This will permanently delete ALL their data including journal entries, embeddings, and summaries. This action cannot be undone!`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/settings/api/users/${username}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showNotification(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(data.message, 'error');
+            }
+        } catch (error) {
+            showNotification('Failed to delete user', 'error');
+            console.error(error);
+        }
+    }
+
+    // Allow Enter key to add user
+    document.getElementById('new-username').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            addUser();
+        }
+    });
+</script>
+{% endblock %}

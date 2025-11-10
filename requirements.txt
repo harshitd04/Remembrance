@@ -1,0 +1,9 @@
+Flask==3.0.0
+python-dotenv==1.0.0
+openai>=1.6.1
+langchain==0.1.0
+langchain-openai==0.0.2
+requests==2.31.0
+numpy==1.26.0
+APScheduler==3.10.4
+Werkzeug==3.0.1

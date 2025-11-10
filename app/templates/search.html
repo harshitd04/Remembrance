@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Remembrance - Search{% endblock %}
+
+{% block content %}
+<h1>Search Memories</h1>
+
+<div class="card">
+    <form data-form="search">
+        <div class="form-group">
+            <input 
+                type="text" 
+                name="query" 
+                placeholder="Search your memories... or describe what you remember"
+                class="form-control"
+                required
+            >
+        </div>
+
+        <div class="form-group" style="display: flex; gap: 1rem; align-items: center;">
+            <label style="margin: 0;">
+                <input type="radio" name="search_type" value="keyword"> Keyword Search
+            </label>
+            <label style="margin: 0;">
+                <input type="radio" name="search_type" value="semantic" checked> Semantic Search (AI)
+            </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+            Search
+        </button>
+    </form>
+</div>
+
+<div class="search-results"></div>
+
+<div class="card" style="background: rgba(26, 26, 26, 0.4); margin-top: 2rem;">
+    <h3>Search Tips</h3>
+    <ul style="color: var(--color-text-muted); line-height: 1.8;">
+        <li><strong>Keyword Search:</strong> Finds exact word matches in your entries</li>
+        <li><strong>Semantic Search:</strong> Uses AI to understand meaning and context</li>
+        <li>Try questions like "What did I accomplish last week?"</li>
+        <li>Or search for themes like "productivity" or "challenges"</li>
+    </ul>
+</div>
+{% endblock %}

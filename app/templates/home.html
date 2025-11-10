@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Remembrance - New Entry{% endblock %}
+
+{% block content %}
+<h1>Remembrance</h1>
+<p style="text-align: center; color: var(--color-text-muted); margin-bottom: 2rem;">
+    Your voice journaling companion
+</p>
+
+<div class="card">
+    <form data-form="journal">
+        <!-- Microphone Button -->
+        <div style="text-align: center;">
+            <button type="button" class="btn btn-microphone">🎤</button>
+            <div class="recording-time">0:00</div>
+        </div>
+
+        <!-- File Upload -->
+        <div class="form-group" style="text-align: center; margin-top: 2rem;">
+            <p style="color: var(--color-text-muted); margin-bottom: 1rem;">Or upload an audio file:</p>
+            <input type="file" accept="audio/*" class="form-control">
+        </div>
+
+        <!-- Transcribed Text Output -->
+        <div class="form-group">
+            <label for="content">Your Entry</label>
+            <textarea 
+                name="content" 
+                id="content"
+                placeholder="Transcribed text appears here... or type your thoughts directly"
+                required
+            ></textarea>
+        </div>
+
+        <!-- Date Selection -->
+        <div class="form-group">
+            <label for="date">Date</label>
+            <input type="date" name="date" id="date" required>
+        </div>
+
+        <!-- Hidden field for entry type -->
+        <input type="hidden" name="type" value="text">
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+            Save Entry
+        </button>
+    </form>
+</div>
+
+<div class="card" style="background: rgba(26, 26, 26, 0.4);">
+    <h3>How to Use</h3>
+    <ul style="color: var(--color-text-muted); line-height: 1.8;">
+        <li>Click the microphone button to record your thoughts</li>
+        <li>Or upload an audio file (MP3, WAV, M4A)</li>
+        <li>Or type directly into the text area</li>
+        <li>Select a date for your entry</li>
+        <li>Click "Save Entry" to store your journal</li>
+    </ul>
+</div>
+{% endblock %}
