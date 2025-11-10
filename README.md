@@ -351,10 +351,4 @@ pip install -r requirements.txt
 - Verify you're looking at the correct user (check top-right of navigation)
 - Each user has completely separate data in `data/{username}/` folders
 
-## License
 
-MIT License
-
-## Support
-
-For issues and questions, please refer to the project documentation or create an issue in the repository.
